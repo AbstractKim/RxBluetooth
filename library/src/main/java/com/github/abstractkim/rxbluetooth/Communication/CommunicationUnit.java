@@ -1,8 +1,8 @@
 package com.github.abstractkim.rxbluetooth.Communication;
 
 import android.util.Log;
-import com.spacepalm.recyclerviewtest.Error.DisconnectedThrowable;
-import com.spacepalm.recyclerviewtest.Error.NullThrowable;
+import com.github.abstractkim.rxbluetooth.Communication.Error.DisconnectedThrowable;
+import com.github.abstractkim.rxbluetooth.Communication.Error.NullThrowable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
