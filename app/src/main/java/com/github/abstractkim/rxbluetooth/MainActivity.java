@@ -1,8 +1,12 @@
 package com.github.abstractkim.rxbluetooth;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,18 +16,41 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import com.github.abstractkim.rxbluetooth.Communication.BluetoothActivity;
+import com.github.abstractkim.rxbluetooth.Communication.RxPeterBluetooth;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+  public static final String TAG = MainActivity.class.getSimpleName();
+  public static final int REQUEST_ENABLE_BT = 1;
+
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+
     setContentView(R.layout.activity_main);
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
+    /*
+    Intent discoverableIntent =
+        new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+    discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+    startActivityForResult(discoverableIntent, REQUEST_ENABLE_BT);
+*/
+
+
     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View view) {
+
         Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
             .setAction("Action", null)
             .show();
@@ -62,7 +89,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     int id = item.getItemId();
 
     //noinspection SimplifiableIfStatement
-    if (id == R.id.action_settings) {
+    if (id == R.id.action_bluetooth) {
+      startActivity(new Intent(this, BluetoothActivity.class));
       return true;
     }
 
@@ -90,5 +118,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
     drawer.closeDrawer(GravityCompat.START);
     return true;
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    // Check which request we're responding to
+    if (requestCode == REQUEST_ENABLE_BT)
+    {
+      Log.d(TAG, "REQUEST_ENABLE_BT");
+
+
+    }
+  }
+  @Override
+  protected void onDestroy(){
+    super.onDestroy();
+    Log.d(TAG, "mCreateBTServerDisposible disposed");
+
   }
 }

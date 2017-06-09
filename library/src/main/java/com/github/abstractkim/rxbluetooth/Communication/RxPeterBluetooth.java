@@ -2,6 +2,7 @@ package com.github.abstractkim.rxbluetooth.Communication;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.util.Log;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Cancellable;
 import java.io.IOException;
@@ -321,4 +323,86 @@ public class RxPeterBluetooth {
             }
         });
     }
+
+
+    static public Observable<BluetoothSocket> createServerObservable(final String name, final UUID uuid){
+        return Observable.create(new ObservableOnSubscribe<BluetoothSocket>() {
+            boolean flag = true;
+            BluetoothServerSocket serverSocket = null;
+            BluetoothSocket bluetoothSocket = null;
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<BluetoothSocket> emitter)
+                throws Exception {
+                BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (bluetoothAdapter == null) {
+                    String errorMsg ="This devices does not suppport Bluetooth";
+                    Log.d(TAG, new StringBuffer("createServerObservable() - ")
+                        .append(errorMsg).toString());
+                    //emitter.onError(new NullThrowable(errorMsg));
+                    return;
+                }
+
+                if(uuid == null){
+                    String errorMsg ="UUID is null";
+                    Log.d(TAG, new StringBuffer("createServerObservable() - ")
+                        .append(errorMsg).toString());
+                    //emitter.onError(new NullThrowable(errorMsg));
+                    return;
+                }
+
+                Log.d(TAG, new StringBuffer("set UUID: ").append(uuid).toString());
+
+
+                emitter.setCancellable(new Cancellable() {
+                    @Override
+                    public void cancel() throws Exception {
+                        flag = false;
+                        if(serverSocket != null)
+                            serverSocket.close();
+                        Log.d(TAG, "createServerObservable() - cancel()");
+                    }
+                });
+
+                while(flag) {
+                    serverSocket = null;
+                    bluetoothSocket = null;
+                    try {
+                        // MY_UUID is the app's UUID string, also used by the client code.
+                        serverSocket =
+                            bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, uuid);
+                    } catch (IOException e) {
+                        Log.e(TAG, "createServerObservable() " + "- listenUsingRfcommWithServiceRecord() method failed", e);
+                    }
+
+                    /**
+                     * this part should be run on thread
+                     */
+
+                    while (true) {
+                        try {
+                            Log.d(TAG, "createServerObservable() - accept()");
+                            bluetoothSocket = serverSocket.accept();
+                        } catch (IOException e) {
+                            Log.e(TAG, "createServerObservable() - Socket's accept() method failed",
+                                e);
+                            break;
+                        }
+
+                        if (bluetoothSocket != null) {
+                            // A connection was accepted. Perform work associated with
+                            // the connection in a separate thread.
+                            emitter.onNext(bluetoothSocket);
+                            serverSocket.close();
+                            Log.d(TAG, "createServerObservable() - a device is connected");
+                            break;
+                        }
+                    }
+                }
+
+                Log.d(TAG, "createServerObservable() - mFlag is false - close server");
+
+            }
+        });
+    }
+
 }

@@ -3,6 +3,9 @@ package com.github.abstractkim.rxbluetooth.Communication;
 import android.util.Log;
 import com.github.abstractkim.rxbluetooth.Communication.Error.DisconnectedThrowable;
 import com.github.abstractkim.rxbluetooth.Communication.Error.NullThrowable;
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -65,14 +68,14 @@ public class CommunicationUnit {
                 byte[] buffer = new byte[1024];
                 int numBytes = 0;  // bytes returned from read()
                 //Keep listening to the InpuStream until an exception occurs.
-                while(true){
-                    try{
+                while(true) {
+                    try {
                         //read from the InputStream
                         numBytes = mIn.read(buffer);
                         //create and emit which wraps the obtained bytes
-                        Log.d(TAG,new StringBuffer("Read Msg:").append(new String(buffer)).toString());
+                        Log.d(TAG, new StringBuffer("Read Msg:").append(new String(buffer)).toString());
                         emitter.onNext(new Packet(buffer, numBytes));
-                    }catch(IOException e){
+                    } catch (IOException e) {
                         String errorMsg = "Input stream was disconnected";
                         Log.d(TAG, "createReadObservable() - " + errorMsg);
                         emitter.onError(new DisconnectedThrowable(errorMsg));
@@ -82,4 +85,39 @@ public class CommunicationUnit {
             }
         });
     }
+
+    /**
+     * Crreate Completable which writes bytes to OutputStream
+     * @param packet
+     * @return Completable that wraps OutputStream and write (blocking function)
+     */
+    public Completable createWriteObservable(final Packet packet){
+        return Completable.create(new CompletableOnSubscribe() {
+            @Override
+            public void subscribe(@NonNull CompletableEmitter emitter) throws Exception {
+                if(packet == null) {
+                    Log.d(TAG, "packet is null");
+                    emitter.onError(new NullThrowable("packet is null"));
+                    return;
+                }
+                if(packet.mData == null) {
+                    Log.d(TAG, "packet.mData is null");
+                    emitter.onError(new NullThrowable("packet.mData is null"));
+                    return;
+                }
+                try {
+                    mOut.write(packet.mData);
+                    mOut.flush();
+                    System.out.print(TAG + "(peter) write: " + new String(packet.mData));
+                    Log.w(TAG, "Write : "+new String(packet.mData));
+                    emitter.onComplete();
+                } catch (IOException e) {
+                    Log.w(TAG, "Write Error" + e.getMessage() );
+                    emitter.onError(e);
+                }
+            }
+        });
+    }
+
+
 }
