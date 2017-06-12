@@ -1,11 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.github.abstractkim.rxbluetooth.Communication.BluetoothActivity"
     >
+  <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:layout_margin="5dp">
 
-</android.support.constraint.ConstraintLayout>
+      <RadioGroup
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+    <RadioButton
+        android:id="@+id/radio_client"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:text="@string/client"
+        android:onClick="onRadioButtonClicked"/>
+    <RadioButton
+        android:id="@+id/radio_server"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:text="@string/server"
+        android:onClick="onRadioButtonClicked"/>
+  </RadioGroup>
+  </FrameLayout>
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:id="@+id/tvStatus"
+      android:text="status"
+      android:padding="8dp"
+      />
+  <FrameLayout
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="9"
+      android:layout_margin="5dp"
+      android:elevation="5dp">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/client_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+  </FrameLayout>
+
+
+</LinearLayout>

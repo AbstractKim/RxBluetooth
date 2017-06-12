@@ -1,11 +1,14 @@
 package com.github.abstractkim.rxbluetooth;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothSocket;
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -17,20 +20,18 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import com.github.abstractkim.rxbluetooth.Communication.BluetoothActivity;
-import com.github.abstractkim.rxbluetooth.Communication.RxPeterBluetooth;
-import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
-import java.util.UUID;
+import com.github.abstractkim.rxbluetooth.Communication.ChatClient;
+import com.github.abstractkim.rxbluetooth.Communication.ChatServer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
   public static final String TAG = MainActivity.class.getSimpleName();
   public static final int REQUEST_ENABLE_BT = 1;
 
-
+  public static ChatServer mServer = null;
+  public static ChatClient mClient = null;
+  public List<String> permissionsNeeded = new ArrayList<String>();
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
@@ -38,14 +39,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     setContentView(R.layout.activity_main);
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
-
-    /*
-    Intent discoverableIntent =
-        new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-    discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-    startActivityForResult(discoverableIntent, REQUEST_ENABLE_BT);
-*/
-
 
     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.setOnClickListener(new View.OnClickListener() {
@@ -65,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
     navigationView.setNavigationItemSelectedListener(this);
+
+    checkPermission(this);
   }
 
   @Override public void onBackPressed() {
@@ -121,19 +116,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
   }
 
   @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    // Check which request we're responding to
-    if (requestCode == REQUEST_ENABLE_BT)
-    {
-      Log.d(TAG, "REQUEST_ENABLE_BT");
-
-
-    }
-  }
-  @Override
   protected void onDestroy(){
     super.onDestroy();
     Log.d(TAG, "mCreateBTServerDisposible disposed");
 
+  }
+
+  private void checkPermission(final Activity thisActivity){
+    final List<String> permissionsList = new ArrayList<String>();
+    if (!addPermission(permissionsList, Manifest.permission.ACCESS_COARSE_LOCATION))
+      permissionsNeeded.add("Get Scaned list");
+    if (permissionsList.size() > 0) {
+      ActivityCompat.requestPermissions(this, permissionsList.toArray(new String[permissionsList.size()]), 0);
+    }
+  }
+
+  private boolean addPermission(List<String> permissionsList, String permission) {
+    if (ContextCompat.checkSelfPermission(this,permission) != PackageManager.PERMISSION_GRANTED) {
+      permissionsList.add(permission);
+      // Check for Rationale Option
+      if (!ActivityCompat.shouldShowRequestPermissionRationale(this,permission))
+        return false;
+    }
+    return true;
   }
 }

@@ -2,6 +2,7 @@ package com.github.abstractkim.rxbluetooth.Communication;
 
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
+import android.widget.TextView;
 import io.reactivex.CompletableObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
@@ -21,9 +22,18 @@ public class ChatServer {
 
   private List<CommunicationUnit> mCommunicationUnitList = new ArrayList<>();
   private Disposable mBTServerDisposable;
+  private List<Disposable> mReadDisposables = new ArrayList<>();
+  private UpdateConnectedDeviceListener mListner;
+  interface UpdateConnectedDeviceListener{
+    void onUpdateConnectedDevice(List<CommunicationUnit> devices);
+  }
+  void setUpdateConnectedDeviceListener(UpdateConnectedDeviceListener listener){
+    mListner = listener;
+  }
   /**
    * method related as server
    */
+
   public void startBluetoothServer(UUID u){
     //    final UUID MY_UUID =
     //        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -40,10 +50,11 @@ public class ChatServer {
                         new BtClassicCommunicationStrategy(bluetoothSocket)));
                 Log.d(TAG, "Create CommunicationUnit");
                 Log.d(TAG, "mCommunicationUnitList size: " + mCommunicationUnitList.size());
+                mListner.onUpdateConnectedDevice(mCommunicationUnitList);
               }
             });
   }
-  void sendMessage(String message){
+  public void sendMessage(String message){
     for(CommunicationUnit unit :mCommunicationUnitList){
       unit.createWriteObservable(new Packet(message.getBytes()))
           .subscribeOn(Schedulers.io())
@@ -60,5 +71,27 @@ public class ChatServer {
             }
           });
     }
+  }
+
+  public void ConnectReadMessageToTextView(final TextView v){
+    for(CommunicationUnit unit :mCommunicationUnitList) {
+      mReadDisposables.add(unit.createReadObservable()
+          .subscribeOn(Schedulers.io())
+          .observeOn(AndroidSchedulers.mainThread())
+          .subscribe(new Consumer<Packet>() {
+            @Override public void accept(@NonNull Packet packet) throws Exception {
+              v.setText(packet.mData.toString());
+            }
+          }));
+    }
+  }
+
+  void clear(){
+    mBTServerDisposable.dispose();
+    for(Disposable d : mReadDisposables){
+      d.dispose();
+    }
+    mCommunicationUnitList.clear();
+    mReadDisposables.clear();
   }
 }
